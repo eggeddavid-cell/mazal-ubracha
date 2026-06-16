@@ -26,11 +26,13 @@ def add_indicators(df: pd.DataFrame) -> pd.DataFrame:
 def detect_levels(df: pd.DataFrame):
     recent = df.tail(80)
     return {
-        "last_close": round(float(df["Close"].iloc[-1]), 2),
+        "מחיר אחרון": round(float(df["Close"].iloc[-1]), 2),
+        "תמיכה": round(float(recent["Low"].min()), 2),
+        "התנגדות": round(float(recent["High"].max()), 2),
+        "פריצה מעל": round(float(recent["High"].max()), 2),
+        "חולשה מתחת": round(float(recent["Low"].min()), 2),
         "support": round(float(recent["Low"].min()), 2),
         "resistance": round(float(recent["High"].max()), 2),
-        "bullish_above": round(float(recent["High"].max()), 2),
-        "bearish_below": round(float(recent["Low"].min()), 2),
     }
 
 def score_trend(df: pd.DataFrame, options=None):
