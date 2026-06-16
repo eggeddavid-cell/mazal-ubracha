@@ -2,14 +2,7 @@ import yfinance as yf
 
 def get_news(symbol: str):
     try:
-        news = yf.Ticker(symbol).news or []
-        out = []
-        for item in news[:10]:
-            out.append({
-                "title": item.get("title", ""),
-                "publisher": item.get("publisher", ""),
-                "link": item.get("link", ""),
-            })
-        return out
+        items = yf.Ticker(symbol).news or []
+        return [{"title": x.get("title",""), "publisher": x.get("publisher",""), "link": x.get("link","")} for x in items[:10]]
     except Exception:
         return []

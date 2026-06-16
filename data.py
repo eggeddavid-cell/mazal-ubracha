@@ -10,27 +10,19 @@ def get_stock_history(symbol: str, period="1mo", interval="15m") -> pd.DataFrame
     return df.dropna()
 
 def get_option_chain(symbol: str):
-    """
-    מקור חינמי דרך Yahoo Finance.
-    לדיוק מקצועי יותר באופציות: Polygon.io / Tradier / ORATS / CBOE LiveVol.
-    """
     try:
         ticker = yf.Ticker(symbol)
         expirations = ticker.options
         if not expirations:
             return {}
-
         exp = expirations[0]
         chain = ticker.option_chain(exp)
-
         calls = chain.calls
         puts = chain.puts
-
         call_vol = int(calls["volume"].fillna(0).sum())
         put_vol = int(puts["volume"].fillna(0).sum())
         call_oi = int(calls["openInterest"].fillna(0).sum())
         put_oi = int(puts["openInterest"].fillna(0).sum())
-
         return {
             "nearest_expiration": exp,
             "call_volume": call_vol,

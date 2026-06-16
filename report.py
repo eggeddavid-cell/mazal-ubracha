@@ -3,37 +3,26 @@ from indicators import score_trend
 def build_report(symbol, df, levels, options, news_items):
     score, trend, risk, checks = score_trend(df, options)
     last = df.iloc[-1]
-
-    summary = []
-    summary.append(f"הסימול {symbol} מציג כרגע מגמה {trend} בציון {score}/100.")
-    summary.append(f"המחיר האחרון הוא {last['Close']:.2f}.")
-    summary.append(f"תמיכה קרובה: {levels['support']}, התנגדות קרובה: {levels['resistance']}.")
-
-    if last["Close"] > last["VWAP"]:
-        summary.append("המחיר מעל VWAP ולכן השליטה היומית נוטה לקונים.")
-    else:
-        summary.append("המחיר מתחת VWAP ולכן השליטה היומית נוטה למוכרים.")
-
+    parts = [
+        f"{symbol}: מגמה {trend} בציון {score}/100.",
+        f"מחיר אחרון {last['Close']:.2f}.",
+        f"תמיכה {levels['support']} | התנגדות {levels['resistance']}."
+    ]
+    parts.append("המחיר מעל VWAP — יתרון לקונים." if last["Close"] > last["VWAP"] else "המחיר מתחת VWAP — יתרון למוכרים.")
     if last["RSI"] > 75:
-        summary.append("שים לב: RSI גבוה מאוד ועלול להופיע מימוש קצר.")
+        parts.append("RSI גבוה — סיכון למימוש קצר.")
     elif last["RSI"] < 30:
-        summary.append("RSI במכירת יתר, ייתכן ניסיון תיקון.")
+        parts.append("RSI במכירת יתר — ייתכן תיקון.")
     else:
-        summary.append("RSI אינו בקיצון חריג.")
-
-    if options:
-        pcr = options.get("put_call_volume_ratio")
-        if pcr is not None:
-            if pcr < 0.8:
-                summary.append("שוק האופציות מראה נטייה שורית לפי Put/Call נמוך.")
-            elif pcr > 1.2:
-                summary.append("שוק האופציות מראה נטייה דובית/הגנתית לפי Put/Call גבוה.")
-            else:
-                summary.append("שוק האופציות מאוזן יחסית לפי Put/Call.")
-
-    if news_items:
-        summary.append("קיימות חדשות עדכניות ולכן יש לבדוק האם הן תומכות בכיוון הטכני.")
-
+        parts.append("RSI ללא קיצון חריג.")
+    if options and options.get("put_call_volume_ratio") is not None:
+        pcr = options["put_call_volume_ratio"]
+        if pcr < 0.8:
+            parts.append("האופציות נוטות שורי לפי Put/Call נמוך.")
+        elif pcr > 1.2:
+            parts.append("האופציות נוטות הגנתי/דובי לפי Put/Call גבוה.")
+        else:
+            parts.append("האופציות מאוזנות יחסית.")
     return {
         "symbol": symbol,
         "score": score,
@@ -41,5 +30,5 @@ def build_report(symbol, df, levels, options, news_items):
         "risk": risk,
         "last_close": float(last["Close"]),
         "checks": checks,
-        "summary": " ".join(summary),
+        "summary": " ".join(parts),
     }
