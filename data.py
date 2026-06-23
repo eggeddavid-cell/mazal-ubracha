@@ -12,9 +12,11 @@ def get_market_data(symbol: str, interval="15min"):
     av_key = _get_secret("ALPHA_VANTAGE_API_KEY")
     if av_key:
         df, _ = _alpha_vantage_data(symbol, interval, av_key)
-        if df is not None and not df.empty: return df, "Alpha Vantage", None
+        if df is not None and not df.empty:
+            return df, "Alpha Vantage", None
     df, err = _yahoo_data(symbol, interval)
-    if df is not None and not df.empty: return df, "Yahoo fallback", None
+    if df is not None and not df.empty:
+        return df, "Yahoo fallback", None
     return pd.DataFrame(), "none", err or "לא התקבלו נתונים."
 
 def _alpha_vantage_data(symbol, interval, key):
@@ -24,7 +26,8 @@ def _alpha_vantage_data(symbol, interval, key):
             data, _ = ts.get_daily(symbol=symbol, outputsize="compact")
         else:
             data, _ = ts.get_intraday(symbol=symbol, interval=interval, outputsize="full")
-        if data is None or data.empty: return pd.DataFrame(), "Alpha Vantage לא החזיר נתונים."
+        if data is None or data.empty:
+            return pd.DataFrame(), "Alpha Vantage לא החזיר נתונים."
         data = data.rename(columns={"1. open":"Open","2. high":"High","3. low":"Low","4. close":"Close","5. volume":"Volume"})
         data = data[["Open","High","Low","Close","Volume"]].sort_index()
         data.index = pd.to_datetime(data.index)
@@ -42,7 +45,8 @@ def _yahoo_data(symbol, interval):
     try:
         t = yf.Ticker(symbol)
         df = t.history(period=_yahoo_period(interval), interval=_yahoo_interval(interval), auto_adjust=False, timeout=20)
-        if df is None or df.empty: return pd.DataFrame(), "Yahoo לא החזיר נתונים."
+        if df is None or df.empty:
+            return pd.DataFrame(), "Yahoo לא החזיר נתונים."
         df = df.rename(columns=str.title)
         return df[["Open","High","Low","Close","Volume"]].dropna(), None
     except Exception as e:

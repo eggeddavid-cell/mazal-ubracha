@@ -1,15 +1,17 @@
-# Options Daily Trend AI v8 Cloud Pro
+# Options Daily Trend AI v9 Options Pro
 
-Add to Streamlit Secrets:
-ALPHA_VANTAGE_API_KEY = "YOUR_KEY"
+Secrets:
+ALPHA_VANTAGE_API_KEY = "..."
+FMP_API_KEY = "..."
 
-Includes:
-- Alpha Vantage primary source
-- Yahoo fallback
-- CALL / PUT / WAIT probabilities
-- Multi-Timeframe
-- Setup Grade A+ to D
-- Backtest
-- Risk management
+Adds:
+- FMP Options Chain
+- Max Pain
+- Call Wall
+- Put Wall
+- Put/Call OI + Volume ratios
+- GEX Proxy
+- Options Heatmap
+- Options layer inside CALL/PUT/WAIT engine
 
-Educational only. Not investment advice.
+Not investment advice.
