@@ -1,17 +1,15 @@
-# Options Daily Trend AI v7 Quant
+# Options Daily Trend AI v8 Cloud Pro
 
-מערכת חזקה ללא API אופציות חיצוני:
-- Yahoo Finance למחירי OHLCV
-- VWAP יומי
-- EMA9/20/50/200
-- RSI, MACD Histogram, ADX, DI, Stochastic
-- Bollinger Bands, ATR, Volume Ratio, OBV
-- זיהוי תבניות נרות
-- תמיכה/התנגדות אוטומטיים
-- Backtest פנימי על הסימול והטיים־פריים
-- הסתברות מכוילת לפי ציון + תוצאות עבר
-- CALL / PUT / WAIT
-- ניהול סיכון וגודל פוזיציה
-- דוח PDF
+Add to Streamlit Secrets:
+ALPHA_VANTAGE_API_KEY = "YOUR_KEY"
 
-לא ייעוץ השקעות.
+Includes:
+- Alpha Vantage primary source
+- Yahoo fallback
+- CALL / PUT / WAIT probabilities
+- Multi-Timeframe
+- Setup Grade A+ to D
+- Backtest
+- Risk management
+
+Educational only. Not investment advice.
