@@ -1,15 +1,5 @@
-# Options Daily Trend AI v3
+# Options Daily Trend AI v4
 
-גרסה משופרת:
-- ממשק RTL מלא בעברית
-- מגמה שורית/דובית בצבע
-- ציון הסתברות גדול
-- מד עוצמה / פחד-חמדנות
-- גרף נרות מקצועי
-- Volume
-- VWAP
-- Bollinger Bands
-- טבלת פעולה: כניסה, סטופ, יעד 1, יעד 2, יחס סיכון/סיכוי
-- הפקת PDF
+Cache, Rate Limit handling, candle patterns, CALL/PUT/WAIT.
 
 לא ייעוץ השקעות.

@@ -1,5 +1,7 @@
 import yfinance as yf
+import streamlit as st
 
+@st.cache_data(ttl=900, show_spinner=False)
 def get_news(symbol: str):
     try:
         items = yf.Ticker(symbol).news or []
