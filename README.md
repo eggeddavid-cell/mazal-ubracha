@@ -1,20 +1,17 @@
-# Options Daily Trend AI v6 Pro
+# Options Daily Trend AI v7 Quant
 
-גרסה מקצועית יותר:
-- Tradier API / Polygon API לאופציות
-- גיבוי Yahoo
-- Max Pain
-- Option Walls
-- GEX בסיסי
-- Heatmap סטרייקים
-- EMA20/50/200, ATR, VWAP, RSI, MACD
-- ניהול סיכון לפי חשבון
-- CALL / PUT / WAIT + אמינות
-
-## Streamlit Secrets
-הוסף אחד מאלה:
-TRADIER_TOKEN = "..."
-או
-POLYGON_API_KEY = "..."
+מערכת חזקה ללא API אופציות חיצוני:
+- Yahoo Finance למחירי OHLCV
+- VWAP יומי
+- EMA9/20/50/200
+- RSI, MACD Histogram, ADX, DI, Stochastic
+- Bollinger Bands, ATR, Volume Ratio, OBV
+- זיהוי תבניות נרות
+- תמיכה/התנגדות אוטומטיים
+- Backtest פנימי על הסימול והטיים־פריים
+- הסתברות מכוילת לפי ציון + תוצאות עבר
+- CALL / PUT / WAIT
+- ניהול סיכון וגודל פוזיציה
+- דוח PDF
 
 לא ייעוץ השקעות.
