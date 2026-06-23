@@ -1,5 +1,5 @@
-# Options Daily Trend AI v4
+# Options Pro Trade Engine v5
 
-Cache, Rate Limit handling, candle patterns, CALL/PUT/WAIT.
+Professional scoring: price, momentum, volatility, options, candle patterns, risk management.
 
 לא ייעוץ השקעות.

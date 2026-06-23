@@ -1,15 +1,17 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 def add_indicators(df):
     df = df.copy()
     typical = (df["High"] + df["Low"] + df["Close"]) / 3
     df["VWAP"] = (typical * df["Volume"]).cumsum() / df["Volume"].replace(0, np.nan).cumsum()
+    for span in [20, 50, 200]:
+        df[f"EMA{span}"] = df["Close"].ewm(span=span, adjust=False).mean()
     df["SMA20"] = df["Close"].rolling(20).mean()
     df["STD20"] = df["Close"].rolling(20).std()
-    df["BB_Middle"] = df["SMA20"]
     df["BB_Upper"] = df["SMA20"] + 2 * df["STD20"]
     df["BB_Lower"] = df["SMA20"] - 2 * df["STD20"]
+    df["BB_Middle"] = df["SMA20"]
     delta = df["Close"].diff()
     gain = delta.clip(lower=0).rolling(14).mean()
     loss = (-delta.clip(upper=0)).rolling(14).mean()
@@ -19,63 +21,43 @@ def add_indicators(df):
     ema26 = df["Close"].ewm(span=26, adjust=False).mean()
     df["MACD"] = ema12 - ema26
     df["MACD_Signal"] = df["MACD"].ewm(span=9, adjust=False).mean()
+    tr = pd.concat([(df["High"]-df["Low"]), (df["High"]-df["Close"].shift()).abs(), (df["Low"]-df["Close"].shift()).abs()], axis=1).max(axis=1)
+    df["ATR"] = tr.rolling(14).mean()
     df["Volume_MA20"] = df["Volume"].rolling(20).mean()
     df["Volume_Ratio"] = df["Volume"] / df["Volume_MA20"]
     return df.dropna()
 
 def detect_levels(df):
-    recent = df.tail(80)
-    support = round(float(recent["Low"].min()), 2)
-    resistance = round(float(recent["High"].max()), 2)
-    return {"מחיר אחרון": round(float(df["Close"].iloc[-1]), 2), "תמיכה": support, "התנגדות": resistance, "פריצה מעל": resistance, "חולשה מתחת": support, "support": support, "resistance": resistance}
+    recent = df.tail(120)
+    support = round(float(recent["Low"].quantile(0.10)), 2)
+    resistance = round(float(recent["High"].quantile(0.90)), 2)
+    return {"מחיר אחרון": round(float(df["Close"].iloc[-1]), 2), "תמיכה": support, "התנגדות": resistance, "תמיכת קיצון": round(float(recent["Low"].min()), 2), "התנגדות קיצון": round(float(recent["High"].max()), 2), "פריצה מעל": resistance, "חולשה מתחת": support, "support": support, "resistance": resistance}
 
 def detect_patterns(df):
     out = []
-    for idx, row in df.tail(8).iterrows():
+    for idx, row in df.tail(10).iterrows():
         body = abs(row["Close"] - row["Open"])
         rng = max(row["High"] - row["Low"], 0.0001)
         upper = row["High"] - max(row["Open"], row["Close"])
         lower = min(row["Open"], row["Close"]) - row["Low"]
         if lower >= body * 2 and upper <= body * 1.2 and body / rng <= 0.45:
-            out.append({"זמן": str(idx), "תבנית": "פטיש", "משמעות": "אפשרות להיפוך שורי", "עוצמה": "בינונית/גבוהה"})
+            out.append({"זמן": str(idx), "תבנית": "פטיש", "כיוון": "שורי", "עוצמה": "בינונית/גבוהה"})
         if upper >= body * 2 and lower <= body * 1.2 and body / rng <= 0.45:
-            out.append({"זמן": str(idx), "תבנית": "כוכב נופל", "משמעות": "אפשרות לחולשה/היפוך דובי", "עוצמה": "בינונית"})
-        if body / rng <= 0.12:
-            out.append({"זמן": str(idx), "תבנית": "דוג'י", "משמעות": "חוסר החלטיות", "עוצמה": "נמוכה/בינונית"})
+            out.append({"זמן": str(idx), "תבנית": "כוכב נופל", "כיוון": "דובי", "עוצמה": "בינונית"})
+        if body / rng <= 0.1:
+            out.append({"זמן": str(idx), "תבנית": "דוג׳י", "כיוון": "ניטרלי", "עוצמה": "בינונית"})
     if len(df) >= 2:
         p, c = df.iloc[-2], df.iloc[-1]
         if c["Close"] > c["Open"] and p["Close"] < p["Open"] and c["Close"] > p["Open"] and c["Open"] < p["Close"]:
-            out.append({"זמן": str(df.index[-1]), "תבנית": "Bullish Engulfing", "משמעות": "איתות שורי", "עוצמה": "גבוהה"})
+            out.append({"זמן": str(df.index[-1]), "תבנית": "Bullish Engulfing", "כיוון": "שורי", "עוצמה": "גבוהה"})
         if c["Close"] < c["Open"] and p["Close"] > p["Open"] and c["Open"] > p["Close"] and c["Close"] < p["Open"]:
-            out.append({"זמן": str(df.index[-1]), "תבנית": "Bearish Engulfing", "משמעות": "איתות דובי", "עוצמה": "גבוהה"})
-    return out if out else [{"זמן": "-", "תבנית": "לא זוהתה", "משמעות": "אין תבנית נרות בולטת בנרות האחרונים", "עוצמה": "-"}]
+            out.append({"זמן": str(df.index[-1]), "תבנית": "Bearish Engulfing", "כיוון": "דובי", "עוצמה": "גבוהה"})
+    return out if out else [{"זמן": "-", "תבנית": "לא זוהתה", "כיוון": "ניטרלי", "עוצמה": "-"}]
 
-def score_trend(df, options=None, patterns=None):
-    last, prev = df.iloc[-1], df.iloc[-2]
-    score, checks = 50, []
-    def add(name, condition, weight):
-        nonlocal score
-        score += weight if condition else -weight
-        checks.append({"בדיקה": name, "תוצאה": "חיובי" if condition else "שלילי", "משקל": weight})
-    add("מחיר מעל VWAP", last["Close"] > last["VWAP"], 12)
-    add("MACD מעל Signal", last["MACD"] > last["MACD_Signal"], 10)
-    add("RSI מעל 50", last["RSI"] > 50, 8)
-    add("RSI לא בקיצון עליון", last["RSI"] < 75, 5)
-    add("Volume מעל ממוצע", last["Volume_Ratio"] > 1, 8)
-    add("סגירה עולה מול נר קודם", last["Close"] > prev["Close"], 7)
-    if options and options.get("put_call_volume_ratio") is not None:
-        bullish = options["put_call_volume_ratio"] < 0.9
-        score += 8 if bullish else -8
-        checks.append({"בדיקה": "Put/Call Volume Ratio", "תוצאה": "חיובי" if bullish else "שלילי", "משקל": 8})
-    if patterns:
-        names = " ".join([p.get("תבנית","") for p in patterns])
-        if "פטיש" in names or "Bullish Engulfing" in names:
-            score += 6
-            checks.append({"בדיקה": "תבנית נרות שורית", "תוצאה": "חיובי", "משקל": 6})
-        if "כוכב נופל" in names or "Bearish Engulfing" in names:
-            score -= 6
-            checks.append({"בדיקה": "תבנית נרות דובית", "תוצאה": "שלילי", "משקל": 6})
-    score = max(0, min(100, int(score)))
-    trend = "שורית" if score >= 70 else "דובית" if score <= 35 else "ניטרלית"
-    risk = "גבוה" if last["RSI"] > 75 or last["Volume_Ratio"] > 3 else "בינוני"
-    return score, trend, risk, checks
+def compute_market_regime(df):
+    last = df.iloc[-1]
+    bullish_stack = last["Close"] > last["EMA20"] > last["EMA50"]
+    bearish_stack = last["Close"] < last["EMA20"] < last["EMA50"]
+    atr_pct = float(last["ATR"] / last["Close"] * 100)
+    regime = "מגמה עולה" if bullish_stack else "מגמה יורדת" if bearish_stack else "דשדוש/מעורב"
+    return {"regime": regime, "atr_pct": round(atr_pct, 2), "above_vwap": bool(last["Close"] > last["VWAP"]), "volume_ratio": round(float(last["Volume_Ratio"]), 2)}
