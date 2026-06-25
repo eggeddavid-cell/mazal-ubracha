@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+/* ── Matches mazal-ubracha light design ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8fafc; --bg2:#ffffff; --bg3:#f1f5f9; --bg4:#e2e8f0;
+  --border:#e2e8f0; --border2:#cbd5e1;
+  --text:#0f172a; --text2:#475569; --text3:#94a3b8;
+  --green:#059669; --red:#dc2626; --amber:#d97706;
+  --blue:#2563eb; --purple:#7c3aed; --cyan:#0891b2;
+  --gold:#f0b429;
+  --mono:'DM Mono',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --disp:'Syne','Inter',sans-serif;
+}
+body{
+  font-family:var(--sans); background:var(--bg);
+  color:var(--text); font-size:13px; padding:16px; direction:rtl;
+}
+/* ── Ticker buttons ── */
+.ticker-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+.ticker-btn{
+  font-size:12px;font-weight:600;padding:5px 13px;border-radius:6px;
+  border:1px solid var(--border2);background:var(--bg2);color:var(--text2);
+  cursor:pointer;transition:all .15s;font-family:var(--mono);
+}
+.ticker-btn:hover{border-color:#2563eb;color:#2563eb}
+.ticker-btn.active{background:#2563eb;border-color:#2563eb;color:#fff}
+.run-btn{
+  padding:7px 18px;background:#0a1628;color:white;border:none;
+  border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;
+  margin-right:auto;transition:background .15s;
+}
+.run-btn:hover{background:#1e293b}
+/* ── Placeholder ── */
+#placeholder{
+  text-align:center;padding:3rem 1rem;color:var(--text3);
+  font-size:13px;
+}
+/* ── Engine cards ── */
+.sprint-title{
+  font-size:11px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.08em;
+  margin:16px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.engines-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+.eng-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:10px;padding:12px 14px;
+}
+.eng-card-title{
+  font-size:10px;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px;
+  padding-bottom:6px;border-bottom:1px solid var(--border);
+}
+.eng-score{
+  font-size:36px;font-weight:700;line-height:1;margin-bottom:2px;
+  font-family:var(--mono);
+}
+.eng-label{font-size:13px;font-weight:600;margin-bottom:8px}
+.eng-bar{height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;margin:8px 0}
+.eng-bar-fill{height:100%;border-radius:2px;transition:width .7s}
+.eng-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:5px 0;border-bottom:1px solid var(--border);
+  font-size:12px;color:var(--text2);
+}
+.eng-row:last-child{border:none}
+.eng-pts{font-family:var(--mono);font-size:12px;font-weight:600}
+/* ── Summary ── */
+.summary-card{
+  background:var(--bg2);border:1px solid var(--border);
+  border-radius:12px;padding:16px 20px;margin-bottom:12px;
+}
+/* ── Trade boxes ── */
+.trade-box{
+  background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:8px;
+  border-right:3px solid var(--blue);
+}
+.trade-box.bull{border-right-color:var(--green)}
+.trade-box.bear{border-right-color:var(--red)}
+.trade-box.neut{border-right-color:var(--amber)}
+.tl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.07em;margin-bottom:3px;font-family:var(--mono)}
+.tv{font-size:13px;font-weight:600;color:var(--text);font-family:var(--mono)}
+.reason-list{list-style:none;padding:0;margin:0}
+.reason-list li{
+  padding:4px 0;border-bottom:1px solid var(--border);
+  font-size:12px;color:var(--text2);display:flex;align-items:flex-start;gap:7px;
+}
+.reason-list li:last-child{border:none}
+.risk-list{list-style:none;padding:0;margin:0}
+.risk-list li{padding:4px 0;font-size:12px;color:var(--amber);display:flex;align-items:flex-start;gap:7px}
+/* ── Pill badges ── */
+.pill{
+  display:inline-block;font-size:10px;padding:2px 9px;border-radius:8px;
+  font-weight:600;font-family:var(--mono);
+}
+.pill-bull{background:#d1fae5;color:#065f46}
+.pill-bear{background:#fee2e2;color:#7f1d1d}
+.pill-neut{background:#fef3c7;color:#78350f}
+.pill-info{background:#eff6ff;color:#1e40af}
+/* ── Conf ring override to work in light mode ── */
+.conf-ring-wrap{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+/* ── Output hidden initially ── */
+#deskOutput{display:none}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="placeholder">
+  בחר מניה ולחץ <strong>הרץ ניתוח</strong> לקבל ניתוח מלא מ-10 מנועי AI
+</div>
+
+<div id="tickerRow" class="ticker-row" style="display:none">
+  <!-- filled by JS -->
+  <button class="run-btn" onclick="runDeskLight()">⚡ הרץ ניתוח</button>
+</div>
+
+<div id="deskOutput">
+
+  <!-- SPRINT 4 SUMMARY — top, most prominent -->
+  <div id="deskSummary" class="summary-card"></div>
+
+  <!-- SPRINT 4 DECISION -->
+  <div id="decisionBody" class="summary-card" style="margin-bottom:12px"></div>
+
+  <!-- SPRINT 1 -->
+  <div class="sprint-title">Sprint 1 — Market Intelligence</div>
+  <div class="engines-grid">
+    <div class="eng-card"><div class="eng-card-title">🌍 Regime Engine</div><div id="regimeBody"></div></div>
+    <div class="eng-card"><div class="eng-card-title">⚡ Conflict Resolver</div><div id="conflictBody"></div></div>
+    <div class="eng-card"><div class="eng-card-title">📋 Strategy Selector</div><div id="stratBody"></div></div>
+  </div>
+
+  <!-- SPRINT 2 -->
+  <div class="sprint-title">Sprint 2 — Trade Setup</div>
+  <div class="engines-grid">
+    <div class="eng-card"><div class="eng-card-title">📐 Direction Engine</div><div id="dirBody"></div></div>
+    <div class="eng-card"><div class="eng-card-title">⏱ Entry Engine</div><div id="entryBody"></div></div>
+    <div class="eng-card"><div class="eng-card-title">📦 Position Engine</div><div id="posBody"></div></div>
+  </div>
+
+  <!-- SPRINT 3 -->
+  <div class="sprint-title">Sprint 3 — Risk & Validation</div>
+  <div class="engines-grid">
+    <div class="eng-card"><div class="eng-card-title">🗺 Gamma Map</div><div id="gammaBody"></div></div>
+    <div class="eng-card"><div class="eng-card-title">📐 EM Validator</div><div id="emBody"></div></div>
+    <div class="eng-card"><div class="eng-card-title">⏰ Session Engine</div><div id="sessionBody"></div></div>
+  </div>
+  <div class="engines-grid" style="grid-template-columns:1fr 2fr">
+    <div class="eng-card"><div class="eng-card-title">🌊 Vol Engine</div><div id="volBody"></div></div>
+    <div class="eng-card" id="playExtra"></div>
+  </div>
+
+</div>
+
+<script>
+/* ── Inject stocks array from parent page (Streamlit passes it via URL params) ── */
+const urlP = new URLSearchParams(location.search);
+const tickerParam = urlP.get('tickers') || 'SPY,QQQ,AAPL,NVDA,TSLA,MSFT,META,AMZN,AMD,GOOGL';
+const priceParam  = urlP.get('prices')  || '';
+
+/* Build minimal stocks array from params */
+const TICKER_LIST = tickerParam.split(',').map(t=>t.trim()).filter(Boolean);
+const PRICE_MAP   = {};
+if(priceParam){
+  priceParam.split(',').forEach(pair=>{
+    const [t,p] = pair.split(':');
+    if(t && p) PRICE_MAP[t.trim()] = parseFloat(p);
+  });
+}
+
+let stocks = TICKER_LIST.map(t=>({
+  t, p: PRICE_MAP[t] || 100,
+  chg: (Math.random()-.5)*4,
+  vol: Math.floor(50+Math.random()*50),
+  rsi: Math.floor(30+Math.random()*50),
+  macd: (Math.random()-.5)*.5,
+  bb: Math.floor(30+Math.random()*40),
+  iv: Math.floor(20+Math.random()*60),
+}));
+
+let deskTicker = TICKER_LIST[0] || 'SPY';
+
+/* ── Ticker buttons ── */
+function initTickerRow(){
+  const row = document.getElementById('tickerRow');
+  row.style.display = 'flex';
+  const existing = row.querySelectorAll('.ticker-btn');
+  existing.forEach(b=>b.remove());
+  const runBtn = row.querySelector('.run-btn');
+  stocks.forEach(s=>{
+    const btn = document.createElement('button');
+    btn.className = 'ticker-btn' + (s.t===deskTicker?' active':'');
+    btn.textContent = s.t;
+    btn.onclick = ()=>{
+      deskTicker = s.t;
+      row.querySelectorAll('.ticker-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    row.insertBefore(btn, runBtn);
+  });
+  document.getElementById('placeholder').style.display='none';
+}
+
+/* ── Light-mode renderEngCard override ── */
+function renderEngCard(score,label,color,rows){
+  const pct = Math.max(0,Math.min(100,score));
+  return `
+    <div class="eng-score" style="color:${color}">${pct}</div>
+    <div class="eng-label" style="color:${color}">${label}</div>
+    <div class="eng-bar"><div class="eng-bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    ${(rows||[]).map(r=>`
+      <div class="eng-row">
+        <span style="color:#475569">${r.p||r.label||''}</span>
+        <span class="eng-pts" style="color:${r.c||color}">${r.pts||r.value||''}</span>
+      </div>`).join('')}`;
+}
+
+/* ── Light confRing ── */
+function confRing(score,color){
+  const r=32,cx=38,cy=38,sw=6;
+  const circ=2*Math.PI*r;
+  const dash=circ*(score/100);
+  return `<svg width="76" height="76" style="flex-shrink:0">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="${sw}"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}"
+      stroke-dasharray="${dash.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"
+      transform="rotate(-90 ${cx} ${cy})"/>
+    <text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central"
+      font-size="15" font-weight="700" fill="${color}" font-family="DM Mono,monospace">${score}</text>
+  </svg>`;
+}
+
+/* ── Main run ── */
+function runDeskLight(){
+  const s = stocks.find(x=>x.t===deskTicker);
+  if(!s) return;
+
+  const ms       = buildMarketState(s);
+  const regime   = runRegimeEngine(ms);
+  const dir      = runDirectionEngine(s);
+  const conflict = runConflictResolver(ms,dir);
+  const strat    = runStrategySelector(ms,regime,dir,{ivRank:ms.ivRank},conflict);
+  const entry    = runEntryEngine(ms,regime,dir);
+  const vol      = runVolEngine(s);
+  const pos      = runPositionEngine(ms,vol,dir,strat);
+  const gamma    = runGammaMap(ms);
+  const em       = runEMValidator(ms,pos);
+  const session  = runSessionEngine(ms);
+  const play     = runPlaybook(ms,regime,conflict,strat,dir,entry,pos,gamma,em,session,vol);
+
+  document.getElementById('deskOutput').style.display='block';
+
+  document.getElementById('regimeBody').innerHTML   = renderEngCard(regime.confidence, regime.label, regime.color, regime.rows);
+  document.getElementById('conflictBody').innerHTML = renderEngCard(Math.max(0,100-conflict.conflict_score*25), conflict.label, conflict.color, conflict.rows);
+  document.getElementById('stratBody').innerHTML    = renderEngCard(play.conf, strat.best.includes('Skip')?'Skip':'Strategy OK', strat.color, strat.rows);
+  document.getElementById('dirBody').innerHTML      = renderEngCard(dir.score, dir.label, dir.color, dir.rows);
+  document.getElementById('entryBody').innerHTML    = renderEngCard(entry.entry_quality, entry.label, entry.color, entry.rows);
+  document.getElementById('posBody').innerHTML      = renderEngCard(80, pos.label, pos.color, pos.rows);
+  document.getElementById('gammaBody').innerHTML    = renderEngCard(70, gamma.label, gamma.color, gamma.rows);
+  document.getElementById('emBody').innerHTML       = renderEngCard(Math.max(0,Math.min(100,70+em.confidence_adj+(em.rr>=2?15:0))), em.label, em.color, em.rows);
+  document.getElementById('sessionBody').innerHTML  = renderEngCard(session.quality, session.label, session.color, session.rows);
+  document.getElementById('volBody').innerHTML      = renderEngCard(Math.min(100,Math.max(0,vol.score+50)), vol.label, vol.color, vol.rows);
+
+  /* ── Summary ── */
+  const biasColor = play.biasColor||'#2563eb';
+  document.getElementById('deskSummary').innerHTML=`
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+      ${confRing(play.conf, play.confColor)}
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:22px;font-weight:800;color:${biasColor};margin-bottom:4px;font-family:'Syne',sans-serif">${s.t} — ${play.bias} (${play.cappedDir}/100)</div>
+        <div style="font-size:13px;font-weight:600;color:${play.confColor};margin-bottom:8px;font-family:'DM Mono',monospace">${play.confLabel}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="pill pill-info">${regime.regime.toUpperCase()} ${regime.confidence}%</span>
+          <span class="pill pill-info">${session.phase}</span>
+          ${conflict.conflict_score>=2?`<span class="pill pill-neut">Conflict ${conflict.conflict_score}/4</span>`:''}
+        </div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px 16px;border-right:3px solid ${strat.color};min-width:160px">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;font-family:'DM Mono',monospace">Best Trade</div>
+        <div style="font-size:16px;font-weight:700;color:${strat.color};font-family:'DM Mono',monospace">${play.trade}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:3px;font-family:'DM Mono',monospace">Alt: ${play.alt}</div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+      ${[
+        ['Trend HTF',dir.trendScore,dir.trendScore>=55?'#059669':'#dc2626'],
+        ['Mom LTF',dir.momScore,dir.momScore>=55?'#059669':'#d97706'],
+        ['Entry',entry.entry_quality,entry.color],
+        ['Session',session.quality,session.color],
+        ['R/R',Math.round(Math.min(100,em.rr*33)),em.rr>=2?'#059669':'#d97706'],
+      ].map(([lbl,val,col])=>`
+        <div style="background:#f1f5f9;border-radius:8px;padding:8px 10px;text-align:center">
+          <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;margin-bottom:3px;font-family:'DM Mono',monospace">${lbl}</div>
+          <div style="font-size:15px;font-weight:700;color:${col};font-family:'DM Mono',monospace">${val}</div>
+        </div>`).join('')}
+    </div>`;
+
+  /* ── Decision playbook ── */
+  document.getElementById('decisionBody').innerHTML=`
+    <div style="font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;font-family:'DM Mono',monospace">📋 Playbook מלא</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+      <div class="trade-box ${play.bias.includes('Bull')?'bull':play.bias.includes('Bear')?'bear':'neut'}">
+        <div class="tl">Bias</div><div class="tv" style="color:${biasColor}">${play.bias}</div></div>
+      <div class="trade-box">
+        <div class="tl">Trade</div><div class="tv" style="color:${strat.color};font-size:11px">${play.trade}</div></div>
+      <div class="trade-box neut">
+        <div class="tl">Entry</div><div class="tv">$${play.entry}</div></div>
+      <div class="trade-box bear">
+        <div class="tl">Invalidation</div><div class="tv" style="color:#dc2626">$${play.invalidation}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+      <div style="background:#d1fae5;border:1px solid #a7f3d0;border-radius:9px;padding:10px 13px">
+        <div class="tl">T1 — 50% Exit</div>
+        <div class="tv" style="color:#059669">$${play.t1} (+${((play.t1/ms.price-1)*100).toFixed(1)}%)</div></div>
+      <div style="background:#ecfdf5;border:1px solid #d1fae5;border-radius:9px;padding:10px 13px">
+        <div class="tl">T2 — Trail</div>
+        <div class="tv" style="color:#059669">$${play.t2} (+${((play.t2/ms.price-1)*100).toFixed(1)}%)</div></div>
+      <div style="background:#f0fdf4;border:1px solid #dcfce7;border-radius:9px;padding:10px 13px">
+        <div class="tl">T3 — Runner</div>
+        <div class="tv" style="color:#059669">$${play.t3} (+${((play.t3/ms.price-1)*100).toFixed(1)}%)</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div>
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;font-family:'DM Mono',monospace">✅ Why</div>
+        <ul class="reason-list">${play.why.map(w=>`<li><span>✅</span><span>${w}</span></li>`).join('')||'<li>—</li>'}</ul>
+      </div>
+      <div>
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px;font-family:'DM Mono',monospace">⚠ Risks</div>
+        <ul class="risk-list">${play.avoid.map(a=>`<li><span>⚠</span><span>${a}</span></li>`).join('')||'<li>—</li>'}</ul>
+      </div>
+    </div>
+    <div style="background:#f8fafc;border-radius:9px;border-right:3px solid #7c3aed;padding:11px 14px;font-size:12px;color:#475569;line-height:1.8;font-family:'DM Mono',monospace">
+      <strong style="color:#0f172a">כניסה:</strong> פריצת $${play.entry} | VWAP $${ms.vwap.toFixed(2)} | ${session.phase}<br>
+      <strong style="color:#dc2626">לא נכנסים:</strong> Range ${regime.regime==='range'?'← עכשיו!':''} | Conflict≥2 | מתחת VWAP<br>
+      <strong style="color:#0891b2">EM:</strong> ±$${em.em1d.toFixed(2)}/יום | R/R ${em.rr}:1 | Gamma Flip $${gamma.gamma_flip}
+    </div>`;
+
+  document.getElementById('playExtra').innerHTML=`
+    <div class="eng-card-title" style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.07em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e2e8f0">🧠 Position Management</div>
+    <ul class="reason-list">
+      <li><span>💰</span><span>$${play.t1} → צא 50%</span></li>
+      <li><span>📈</span><span>אחרי T1 → Stop ל-BE $${(ms.price*.998).toFixed(2)}</span></li>
+      <li><span>⏱</span><span>Time Stop: ${play.manage.time_stop}</span></li>
+      <li><span>🔴</span><span>מתחת $${play.invalidation} → EXIT 100%</span></li>
+      ${vol.ivRank>65?`<li><span>⚠</span><span>IV Rank ${vol.ivRank}% — זהירות IV Crush</span></li>`:''}
+    </ul>`;
+}
+
+/* ── Engine JS injected here ── */
+function norm(x){const a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=.3275911;const s=x<0?-1:1;x=Math.abs(x)/Math.SQRT2;const t=1/(1+p*x);return .5*(1+s*(1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x)));}
+
+function bs(S,K,T,r,iv,type){T/=365;if(T<=0)return{price:0,delta:0,gamma:0,theta:0,vega:0,rho:0};const sig=iv/100;const d1=(Math.log(S/K)+(r/100+sig*sig/2)*T)/(sig*Math.sqrt(T));const d2=d1-sig*Math.sqrt(T);const nd1=Math.exp(-d1*d1/2)/Math.sqrt(2*Math.PI);let price,delta,rho;if(type==='call'){price=S*norm(d1)-K*Math.exp(-r/100*T)*norm(d2);delta=norm(d1);rho=K*T*Math.exp(-r/100*T)*norm(d2)/100;}else{price=K*Math.exp(-r/100*T)*norm(-d2)-S*norm(-d1);delta=norm(d1)-1;rho=-K*T*Math.exp(-r/100*T)*norm(-d2)/100;}const gamma=nd1/(S*sig*Math.sqrt(T));const theta=(-(S*nd1*sig)/(2*Math.sqrt(T))-r/100*K*Math.exp(-r/100*T)*(type==='call'?norm(d2):norm(-d2)))/365;const vega=S*nd1*Math.sqrt(T)/100;return{price:Math.max(0,price),delta,gamma,theta,vega,rho};}
+
+function buildMarketState(s) {
+  const price  = s.p;
+  const atrPct = parseFloat((s.iv / 100 * Math.sqrt(1/252) * 100).toFixed(3)); // daily ATR%
+  const atr    = price * atrPct / 100;
+  const ema21  = price * (1 + (s.macd > 0 ? 0.009 : -0.009));
+  const sma50  = price * (1 + (s.rsi  > 50 ? -0.022 : 0.022));
+  const vwap   = price * (1 + (s.chg  > 0 ? -0.006 : 0.006));
+  const bbUpper= price * (1 + s.iv / 100 * 0.35);
+  const bbLower= price * (1 - s.iv / 100 * 0.35);
+  const bbWidth= parseFloat(((bbUpper - bbLower) / price * 100).toFixed(2));
+  const spy    = stocks.find(x => x.t === 'SPY') || { chg: 0 };
+  const ivRank = Math.round(s.iv > 40 ? 72 : s.iv > 25 ? 44 : 20);
+  const hv30   = Math.max(8, Math.round(s.iv * (0.68 + Math.random() * 0.38)));
+  const ivhv   = parseFloat((s.iv / hv30).toFixed(2));
+  const K      = Math.round(price / 5) * 5;
+  const maxpain= K - Math.round((Math.random() - 0.5) * 8);
+  const gex    = s.macd > 0.3 ? 1 : s.macd < -0.3 ? -1 : 0; // positive/negative/neutral
+  const gexMag = Math.abs(s.macd) * 100;
+  const pcr    = parseFloat((0.6 + Math.random() * 0.8).toFixed(2));
+  const callPct= Math.round(30 + Math.random() * 40 + (s.vol > 65 ? 15 : 0));
+  const dte    = 14;
+  const theta  = parseFloat((-price * (s.iv/100) * Math.sqrt(1/365) / 100).toFixed(3));
+  const nowH   = new Date().getHours();
+  const nowM   = new Date().getMinutes();
+  const timeVal= nowH * 60 + nowM;
+  let session;
+  if      (timeVal >= 930  && timeVal < 960)  session = 'open';
+  else if (timeVal >= 960  && timeVal < 1110) session = 'midmorning';
+  else if (timeVal >= 1110 && timeVal < 1230) session = 'lunch';
+  else if (timeVal >= 1230 && timeVal < 1350) session = 'afternoon';
+  else if (timeVal >= 1350 && timeVal < 1530) session = 'power_hour';
+  else if (timeVal >= 1530 && timeVal <= 1600) session = 'close';
+  else session = 'premarket';
+
+  const intradayRange = Math.abs(price * s.chg / 100) * (1.5 + Math.random());
+  const em1Day = price * s.iv / 100 * Math.sqrt(1/365);
+
+  return {
+    ticker: s.t, price, atr, atrPct, ema21, sma50, vwap, bbUpper, bbLower, bbWidth,
+    rsi: s.rsi, macd: s.macd, chg: s.chg, iv: s.iv, vol: s.vol,
+    ivRank, hv30, ivhv, K, maxpain, gex, gexMag, pcr, callPct, dte, theta,
+    session, intradayRange, em1Day, spy, s
+  };
+}
+
+function runRegimeEngine(ms) {
+  const rows = [], notes = [];
+  let regime, confidence = 60;
+
+  const bbCompressed   = ms.bbWidth < ms.iv * 0.28;
+  const nearMaxPain    = Math.abs(ms.price - ms.maxpain) < ms.atr * 1.2;
+  const gexPositive    = ms.gex > 0;
+  const rangeExpanding = Math.abs(ms.chg) > 1.5 && ms.vol > 70;
+  const volExpanding   = ms.vol > 75;
+  const aboveVWAP      = ms.price > ms.vwap;
+  const ema21Up        = ms.macd > 0;
+  const hhhl           = ms.chg > 0.8 && ms.rsi > 52;
+
+  rows.push({p:`ATR%: ${ms.atrPct.toFixed(2)}% | BB Width: ${ms.bbWidth.toFixed(2)}%`,pts:'',c:'var(--text3)'});
+  rows.push({p:`GEX: ${ms.gex > 0 ? 'חיובי +' : ms.gex < 0 ? 'שלילי -' : 'ניטרלי'} (${ms.gexMag.toFixed(0)})`,pts:'',c:ms.gex>0?'var(--green)':'var(--red)'});
+  rows.push({p:`Max Pain: $${ms.maxpain} | מרחק: $${Math.abs(ms.price-ms.maxpain).toFixed(2)}`,pts:'',c:'var(--text3)'});
+
+  if (gexPositive && nearMaxPain && bbCompressed) {
+    regime = 'range'; confidence = 78;
+    notes.push('GEX חיובי → Pin effect'); notes.push('מחיר קרוב Max Pain'); notes.push('BB Width דחוס');
+    rows.push({p:'✅ Positive GEX + Near Max Pain + BB Compressed',pts:'→ RANGE',c:'var(--amber)'});
+  } else if (ms.gex < 0 && rangeExpanding && volExpanding) {
+    regime = 'squeeze'; confidence = 74;
+    notes.push('GEX שלילי → Dealers Short Gamma'); notes.push('Range מתרחב'); notes.push('Volume מתרחב');
+    rows.push({p:'⚡ Negative GEX + Range Expanding + Volume',pts:'→ SQUEEZE',c:'var(--purple)'});
+  } else if (aboveVWAP && ema21Up && hhhl) {
+    regime = 'trend'; confidence = 72;
+    notes.push('מעל VWAP'); notes.push('EMA21 עולה'); notes.push('HH/HL structure');
+    rows.push({p:'📈 Above VWAP + EMA21 Up + HH/HL',pts:'→ TREND',c:'var(--green)'});
+  } else {
+    regime = 'mixed'; confidence = 52;
+    notes.push('אין Regime ברור'); notes.push('המתן לאישור');
+    rows.push({p:'⬜ Mixed signals — אין Regime ברור',pts:'→ MIXED',c:'var(--text2)'});
+  }
+
+  const colors = {trend:'var(--green)', range:'var(--amber)', squeeze:'var(--purple)', mixed:'var(--text2)'};
+  const icons  = {trend:'📈', range:'↔', squeeze:'⚡', mixed:'？'};
+  const color  = colors[regime];
+  const label  = `${icons[regime]} ${regime.toUpperCase()}`;
+
+  rows.push({p:`Confidence: ${confidence}%`,pts:'',c:color});
+  notes.forEach(n => rows.push({p:`• ${n}`,pts:'',c:'var(--text3)'}));
+
+  return { regime, confidence, color, label, rows, notes, bbCompressed, nearMaxPain, gexPositive };
+}
+
+function runConflictResolver(ms, dir) {
+  const rows = [];
+  let conflict_score = 0;
+  const conflicts = [];
+
+  const macdBull   = ms.macd > 0.1;
+  const ema21Down  = ms.price < ms.ema21;
+  const belowVWAP  = ms.price < ms.vwap;
+  const bullBias   = dir.score >= 55;
+
+  if (macdBull && ema21Down) {
+    conflict_score++;
+    conflicts.push('MACD Bullish אבל EMA21 Downtrend');
+    rows.push({p:'⚡ MACD Bullish + EMA21 Down',pts:'+1 conflict',c:'var(--red)'});
+  }
+  if (belowVWAP && bullBias) {
+    conflict_score++;
+    conflicts.push('מחיר מתחת VWAP + Bullish Bias');
+    rows.push({p:'⚡ מחיר < VWAP אבל Bias שורי',pts:'+1 conflict',c:'var(--red)'});
+  }
+  if (ms.chg < -0.5 && bullBias) {
+    conflict_score++;
+    conflicts.push('Day change שלילי + Bullish Bias');
+    rows.push({p:'⚡ שינוי יומי שלילי + Bullish Bias',pts:'+1 conflict',c:'var(--amber)'});
+  }
+  if (ms.rsi > 70 && bullBias) {
+    conflict_score++;
+    conflicts.push(`RSI ${Math.round(ms.rsi)} — Overbought עם Bullish bias`);
+    rows.push({p:`⚡ RSI ${Math.round(ms.rsi)} Overbought + Bullish bias`,pts:'+1 conflict',c:'var(--amber)'});
+  }
+
+  let new_bias_cap = 100, effect = 'none', message = 'אין קונפליקט משמעותי';
+  let downgradeColor = 'var(--green)';
+
+  if (conflict_score >= 3) {
+    new_bias_cap = 55; effect = 'cap_bias_hard';
+    message = 'קונפליקט חזק — Direction מוגבל ל-55';
+    downgradeColor = 'var(--red)';
+    rows.push({p:`🔴 Cap ל-${new_bias_cap} | Downgrade forced`,pts:'HARD CAP',c:'var(--red)'});
+  } else if (conflict_score >= 2) {
+    new_bias_cap = 62; effect = 'cap_bias';
+    message = 'קונפליקט בינוני — Direction מוגבל ל-62';
+    downgradeColor = 'var(--amber)';
+    rows.push({p:`🟠 Cap ל-${new_bias_cap} | Downgrade trade type`,pts:'CAP',c:'var(--amber)'});
+  } else if (conflict_score === 1) {
+    new_bias_cap = 75; effect = 'warn';
+    message = 'קונפליקט קל — המתן לאישור נוסף';
+    downgradeColor = 'var(--amber)';
+    rows.push({p:'🟡 אזהרה קלה — אשר לפני כניסה',pts:'WARN',c:'var(--amber)'});
+  } else {
+    rows.push({p:'✅ אין קונפליקט — סיגנלים תואמים',pts:'CLEAN',c:'var(--green)'});
+  }
+
+  const label = `Score: ${conflict_score}/4`;
+  const color = downgradeColor;
+
+  return { conflict_score, new_bias_cap, effect, message, color, label, rows, conflicts };
+}
+
+function runStrategySelector(ms, regime, dir, vol, conflict) {
+  const rows = [];
+  const ivRank   = ms.ivRank;
+  const ivLow    = ivRank < 40;
+  const ivNeutral= ivRank >= 40 && ivRank <= 65;
+  const ivRich   = ivRank > 65;
+  const K = ms.K, K5 = K+5, Km5 = K-5, K10 = K+10;
+  const cappedDir = Math.min(dir.score, conflict.new_bias_cap);
+
+  let best, alt, why = [], avoid = [];
+
+  rows.push({p:`Regime: ${regime.regime} | IV Rank: ${ivRank}% | Dir (capped): ${cappedDir}`,pts:'',c:'var(--text3)'});
+
+  if (regime.regime === 'trend' && cappedDir >= 65) {
+    if (ivLow)     { best=`Long Call $${K}`; alt=`Bull Call Spread $${K}/$${K5}`; }
+    else if (ivNeutral){ best=`Bull Call Spread $${K}/$${K5}`; alt=`Long Call $${K}`; }
+    else           { best=`Bull Call Spread $${K}/$${K5}`; alt=`Call Diagonal $${K}/$${K5}`; }
+    why=['Bullish Trend Regime','Direction confirmed','Momentum aligned'];
+    avoid=['Iron Condor — שוק trending','Naked short — GEX risk'];
+    rows.push({p:`📈 Trend + Bullish + IV ${ivRich?'Rich':'OK'}`,pts:'',c:'var(--green)'});
+  } else if (regime.regime === 'trend' && cappedDir <= 35) {
+    if (ivLow)     { best=`Long Put $${K}`; alt=`Bear Put Spread $${K}/$${Km5}`; }
+    else           { best=`Bear Put Spread $${K}/$${Km5}`; alt=`Put Diagonal`; }
+    why=['Bearish Trend Regime','Direction down'];
+    avoid=['Iron Condor','Long Calls'];
+    rows.push({p:'📉 Trend + Bearish',pts:'',c:'var(--red)'});
+  } else if (regime.regime === 'range') {
+    if (ivRich)    { best=`Iron Condor $${Km5}/$${K}/$${K5}/$${K10}`; alt=`Credit Spread $${K}/$${K5}`; }
+    else           { best=`Iron Condor $${Km5}/$${K}/$${K5}/$${K10}`; alt=`Straddle`; }
+    why=['Range Regime','IV elevated supports selling','Max Pain magnet'];
+    avoid=['Long directional','Chasing breakouts'];
+    rows.push({p:'↔ Range + IV Rich → Selling premium',pts:'',c:'var(--amber)'});
+  } else if (regime.regime === 'squeeze') {
+    best=`Long Call $${K5} (momentum play)`; alt=`Bull Call Spread $${K}/$${K5}`;
+    why=['Squeeze → Directional Gamma play','GEX שלילי מגביר moves','Volume breakout'];
+    avoid=['Iron Condor — will blow out','Short premium'];
+    rows.push({p:'⚡ Squeeze → Directional Gamma play',pts:'',c:'var(--purple)'});
+  } else {
+    best='Skip / המתן לאישור'; alt='Paper trade observation only';
+    why=['Mixed regime — אין edge ברור'];
+    avoid=['כל פוזיציה directional קטגורית'];
+    rows.push({p:'？ Mixed — Skip',pts:'',c:'var(--text2)'});
+  }
+
+  if (conflict.conflict_score >= 2) {
+    rows.push({p:`⚠ Conflict Downgrade → ${best} → Spread forced`,pts:'',c:'var(--amber)'});
+    if (!best.includes('Spread') && !best.includes('Skip')) {
+      alt = best; best = best.includes('Call') ? `Bull Call Spread $${K}/$${K5}` : `Bear Put Spread $${K}/$${Km5}`;
+    }
+  }
+
+  why.forEach(w => rows.push({p:`✅ ${w}`,pts:'',c:'var(--green)'}));
+  avoid.forEach(a => rows.push({p:`❌ ${a}`,pts:'',c:'var(--red)'}));
+
+  const color = best.includes('Skip') ? 'var(--text2)' : cappedDir >= 55 ? 'var(--green)' : 'var(--red)';
+  return { best, alt, why, avoid, color, label: best, rows };
+}
+
+function runDirectionEngine(s) {
+  const ms   = buildMarketState(s);
+  const rows = [];
+  let trendScore = 0, momScore = 0;
+
+  rows.push({p:'─── Trend (HTF) ───',pts:'',c:'var(--text3)'});
+  if (ms.price > ms.vwap)  { trendScore+=15; rows.push({p:`מחיר > VWAP $${ms.vwap.toFixed(2)}`,pts:'+15',c:'var(--green)'}); }
+  else                     { trendScore-=10; rows.push({p:`מחיר < VWAP $${ms.vwap.toFixed(2)}`,pts:'-10',c:'var(--red)'}); }
+  if (ms.price > ms.ema21) { trendScore+=10; rows.push({p:`מחיר > EMA21 $${ms.ema21.toFixed(2)}`,pts:'+10',c:'var(--green)'}); }
+  else                     { trendScore-=15; rows.push({p:`מחיר < EMA21 ← Downtrend!`,pts:'-15',c:'var(--red)'}); }
+  if (ms.price > ms.sma50) { trendScore+=10; rows.push({p:`מחיר > SMA50 $${ms.sma50.toFixed(2)}`,pts:'+10',c:'var(--green)'}); }
+  else                     { trendScore-=10; rows.push({p:`מחיר < SMA50`,pts:'-10',c:'var(--red)'}); }
+  if (ms.chg > 1.5)        { trendScore+=15; rows.push({p:'HH/HL structure — מגמה שורית',pts:'+15',c:'var(--green)'}); }
+  else if (ms.chg < -1.5)  { trendScore-=15; rows.push({p:'LH/LL structure — מגמה דובית',pts:'-15',c:'var(--red)'}); }
+  else                     { rows.push({p:'Range structure',pts:'0',c:'var(--text3)'}); }
+
+  rows.push({p:'─── Momentum (LTF) ───',pts:'',c:'var(--text3)'});
+  if      (ms.macd > 0.5)  { momScore+=10; rows.push({p:`MACD ${ms.macd.toFixed(2)} חיובי חזק`,pts:'+10',c:'var(--green)'}); }
+  else if (ms.macd > 0.1)  { momScore+=6;  rows.push({p:`MACD ${ms.macd.toFixed(2)} חיובי`,pts:'+6',c:'var(--green)'}); }
+  else if (ms.macd < -0.3) { momScore-=10; rows.push({p:`MACD ${ms.macd.toFixed(2)} שלילי`,pts:'-10',c:'var(--red)'}); }
+  const rsiR = Math.round(ms.rsi);
+  if      (rsiR>=50&&rsiR<=65){ momScore+=5; rows.push({p:`RSI ${rsiR} Bullish zone`,pts:'+5',c:'var(--green)'}); }
+  else if (rsiR>70)            { momScore-=5; rows.push({p:`RSI ${rsiR} Overbought`,pts:'-5',c:'var(--amber)'}); }
+  else if (rsiR<35)            { momScore+=3; rows.push({p:`RSI ${rsiR} Oversold`,pts:'+3',c:'var(--cyan)'}); }
+
+  rows.push({p:'─── Flow ───',pts:'',c:'var(--text3)'});
+  let flowAdj = 0;
+  if (ms.callPct > 55)  { flowAdj+=10; rows.push({p:`Call Flow ${ms.callPct}% dominant`,pts:'+10',c:'var(--green)'}); }
+  else                  { flowAdj-=5;  rows.push({p:'Put Flow dominant',pts:'-5',c:'var(--red)'}); }
+  if (ms.pcr < 0.8)     { flowAdj+=5;  rows.push({p:`P/C ${ms.pcr} שורי`,pts:'+5',c:'var(--green)'}); }
+  else if (ms.pcr > 1.2){ flowAdj-=10; rows.push({p:`P/C ${ms.pcr} דובי`,pts:'-10',c:'var(--red)'}); }
+  if (ms.spy.chg > 0.3) { flowAdj+=10; rows.push({p:`SPY +${ms.spy.chg?.toFixed(2)}% עולה`,pts:'+10',c:'var(--green)'}); }
+  else if (ms.spy.chg < -0.3){ flowAdj-=10; rows.push({p:`SPY ${ms.spy.chg?.toFixed(2)}% חלש`,pts:'-10',c:'var(--red)'}); }
+
+  // Conflict penalty
+  const scalp = ms.price < ms.ema21 && momScore > 0;
+  let conflictPenalty = 0;
+  if (scalp) { conflictPenalty = -15; rows.push({p:'⚡ CONFLICT: Momentum Bullish + EMA21 Down → SCALP ONLY',pts:'-15',c:'var(--red)'}); }
+  if (ms.price < ms.sma50 && ms.price < ms.ema21) { conflictPenalty -= 10; rows.push({p:'⚡ מתחת SMA50+EMA21 → Bear territory',pts:'-10',c:'var(--red)'}); }
+
+  let score = Math.round(50 + trendScore*0.5 + momScore*0.3 + flowAdj*0.5 + conflictPenalty);
+  // Range cap
+  const insideBB = ms.price < ms.bbUpper*0.985 && ms.price > ms.bbLower*1.015;
+  if (insideBB && Math.abs(ms.chg) < 1.0 && score > 70) { score = 70; rows.push({p:'⚠ Range cap → max 70',pts:'CAP',c:'var(--amber)'}); }
+  score = Math.min(100, Math.max(0, score));
+
+  let label, color;
+  if      (score>=70){ label='Bullish 🟢'; color='var(--green)'; }
+  else if (score>=55){ label='Bullish Weak 🟡'; color='var(--amber)'; }
+  else if (score>=45){ label='Neutral ⬜'; color='var(--text2)'; }
+  else if (score>=30){ label='Bearish Weak 🟠'; color='var(--amber)'; }
+  else               { label='Bearish 🔴'; color='var(--red)'; }
+
+  const trendFinal = Math.min(100,Math.max(0,50+trendScore));
+  const momFinal   = Math.min(100,Math.max(0,50+momScore));
+  return { score, label, color, rows, pcr:ms.pcr, scalp, trendScore:trendFinal, momScore:momFinal,
+           ema21:ms.ema21, sma50:ms.sma50, vwap:ms.vwap, atr:ms.atr };
+}
+
+function runEntryEngine(ms, regime, dir) {
+  const rows = [];
+  const price  = ms.price;
+  const trigger= parseFloat((price * 1.005).toFixed(2));
+  const invalid= parseFloat((price * 0.992).toFixed(2));
+  const vwap   = ms.vwap;
+  const ema21  = ms.ema21;
+
+  const priceAboveTrigger    = price >= trigger * 0.999;
+  const aboveVWAP            = price > vwap;
+  const volumeExpanding      = ms.vol > 70;
+  const notExtended          = Math.abs(price - vwap) / ms.atr < 3;
+  const pullbackToEMA        = Math.abs(price - ema21) / price < 0.01;
+  const rejectionCandle      = ms.chg > 0.3 && ms.rsi < 65;
+  const breakoutConfirmed    = priceAboveTrigger && volumeExpanding && notExtended;
+  const retestCondition      = !priceAboveTrigger && pullbackToEMA && rejectionCandle;
+
+  let entry_state, entry_quality, stateColor;
+
+  if (regime.regime === 'range') {
+    entry_state = 'no_trade'; entry_quality = 20; stateColor = 'var(--text2)';
+    rows.push({p:'❌ Range Regime — אל תרדוף breakouts',pts:'NO TRADE',c:'var(--red)'});
+  } else if (breakoutConfirmed && aboveVWAP) {
+    entry_state = 'breakout'; entry_quality = 85; stateColor = 'var(--green)';
+    rows.push({p:'🚀 BREAKOUT — כל תנאים מאושרים',pts:'ENTER',c:'var(--green)'});
+    rows.push({p:`מחיר > Trigger $${trigger} ✅`,pts:'',c:'var(--green)'});
+    rows.push({p:`Volume ${ms.vol}/100 > 70 ✅`,pts:'',c:'var(--green)'});
+    rows.push({p:`לא Extended (${(Math.abs(price-vwap)/ms.atr).toFixed(1)}x ATR) ✅`,pts:'',c:'var(--green)'});
+  } else if (retestCondition) {
+    entry_state = 'retest'; entry_quality = 72; stateColor = 'var(--cyan)';
+    rows.push({p:'🔄 RETEST — Pullback ל-EMA21/VWAP',pts:'WAIT CONFIRM',c:'var(--cyan)'});
+    rows.push({p:`Pullback ל-EMA21 $${ema21.toFixed(2)} ✅`,pts:'',c:'var(--cyan)'});
+    rows.push({p:'Rejection candle — המתן לסגירה',pts:'',c:'var(--cyan)'});
+    rows.push({p:'Volume contraction → re-expansion',pts:'',c:'var(--text3)'});
+  } else if (!aboveVWAP || !volumeExpanding) {
+    entry_state = 'wait_breakout'; entry_quality = 40; stateColor = 'var(--amber)';
+    rows.push({p:'⏳ WAIT — ממתין לאישור',pts:'WAIT',c:'var(--amber)'});
+    if (!aboveVWAP)      rows.push({p:`מחיר < VWAP $${vwap.toFixed(2)} — המתן לפריצה`,pts:'',c:'var(--amber)'});
+    if (!volumeExpanding) rows.push({p:`Volume ${ms.vol}/100 נמוך — אין Conviction`,pts:'',c:'var(--amber)'});
+  } else if (ms.chg < -1.0) {
+    entry_state = 'fade'; entry_quality = 30; stateColor = 'var(--red)';
+    rows.push({p:'📉 FADE — שוק נחלש, אל תלחם בטרנד',pts:'FADE',c:'var(--red)'});
+  } else {
+    entry_state = 'wait_breakout'; entry_quality = 55; stateColor = 'var(--amber)';
+    rows.push({p:'⏳ Monitoring — קרוב לאישור',pts:'MONITOR',c:'var(--amber)'});
+  }
+
+  rows.push({p:`Trigger: $${trigger} | Invalid: $${invalid}`,pts:'',c:'var(--text3)'});
+  rows.push({p:`Entry Quality: ${entry_quality}/100`,pts:'',c:stateColor});
+
+  const labels = {breakout:'🚀 Breakout',retest:'🔄 Retest',wait_breakout:'⏳ Wait',fade:'📉 Fade',no_trade:'❌ No Trade'};
+  return { entry_state, entry_quality, trigger, invalid, stateColor, label:labels[entry_state]||entry_state, rows, color:stateColor };
+}
+
+function runPositionEngine(ms, vol, dir, strat) {
+  const rows = [];
+  const price  = ms.price;
+  const atr    = ms.atr;
+  const dte    = ms.dte;
+  const theta  = ms.theta;
+
+  // Targets
+  const t1 = parseFloat((price * 1.020).toFixed(2));
+  const t2 = parseFloat((price * 1.035).toFixed(2));
+  const t3 = parseFloat((price * 1.055).toFixed(2));
+  const stop = parseFloat((price * 0.985).toFixed(2));
+  const trailingStop = parseFloat((t1 * 0.993).toFixed(2));
+
+  rows.push({p:'─── Partial Take Profit Rules ───',pts:'',c:'var(--text3)'});
+  rows.push({p:`T1 (+2%): $${t1} → צא 50% מהפוזיציה`,pts:'50%',c:'var(--green)'});
+  rows.push({p:`T2 (+3.5%): $${t2} → Trailing stop ל-$${trailingStop}`,pts:'Trail',c:'var(--green)'});
+  rows.push({p:`T3 (+5.5%): $${t3} → Runner 10-20%`,pts:'Runner',c:'var(--cyan)'});
+
+  rows.push({p:'─── Stop Rules ───',pts:'',c:'var(--text3)'});
+  rows.push({p:`Initial Stop: $${stop} (${(Math.abs(price-stop)/price*100).toFixed(1)}%)`,pts:'HARD',c:'var(--red)'});
+  rows.push({p:`אחרי T1 → הזז Stop ל-$${(price*0.997).toFixed(2)} (Breakeven)`,pts:'BE',c:'var(--amber)'});
+
+  rows.push({p:'─── Time Stop (Theta) ───',pts:'',c:'var(--text3)'});
+  rows.push({p:`Theta: $${Math.abs(theta).toFixed(3)}/יום (${Math.abs(dte*theta).toFixed(2)} סה"כ)`,pts:'',c:'var(--amber)'});
+  if (dte <= 2)      rows.push({p:'🔴 DTE≤2: EXIT עכשיו אם אין move',pts:'EXIT',c:'var(--red)'});
+  else if (dte <= 7) rows.push({p:`⏰ DTE${dte}: אם אין פריצה תוך ${Math.max(1,dte-3)} ימים → EXIT`,pts:'TIME',c:'var(--amber)'});
+  else               rows.push({p:`DTE ${dte}+ — Theta ב-control`,pts:'OK',c:'var(--green)'});
+
+  rows.push({p:'─── Volatility Crush Warning ───',pts:'',c:'var(--text3)'});
+  if (ms.ivRank > 65) rows.push({p:'⚠ IV גבוה — זהירות מ-IV Crush לאחר event',pts:'CRUSH',c:'var(--red)'});
+  else                rows.push({p:'IV Crush risk נמוך',pts:'OK',c:'var(--green)'});
+
+  rows.push({p:'─── Post-Close Signal ───',pts:'',c:'var(--text3)'});
+  const closeNearHigh = ms.chg > 1.0 && ms.vol > 70;
+  if (closeNearHigh) rows.push({p:'✅ Close near High + Volume → Continuation bias',pts:'HOLD',c:'var(--green)'});
+  else if (ms.chg > 0 && ms.vol < 50) rows.push({p:'⚠ Close faded — שקול לצמצם',pts:'TRIM',c:'var(--amber)'});
+  else rows.push({p:'Close ניטרלי',pts:'',c:'var(--text3)'});
+
+  const label = dte <= 2 ? 'Exit Now ❗' : closeNearHigh ? 'Hold Runner ✅' : 'Manage ⚙️';
+  const color = dte <= 2 ? 'var(--red)' : closeNearHigh ? 'var(--green)' : 'var(--amber)';
+  return { t1, t2, t3, stop, trailingStop, label, color, rows, closeNearHigh };
+}
+
+function runGammaMap(ms) {
+  const rows = [];
+  const K = ms.K, price = ms.price;
+  const atr = ms.atr;
+
+  const gamma_flip   = parseFloat((K + (ms.gex > 0 ? 2 : -3)).toFixed(2));
+  const call_walls   = [K+5, K+10];
+  const put_walls    = [K-2.5, K-5, K-10];
+  const magnet_zone  = [parseFloat((ms.maxpain-1).toFixed(2)), parseFloat((ms.maxpain+1).toFixed(2))];
+  const squeeze_zone = parseFloat((K + (ms.gex < 0 ? 3 : 5)).toFixed(2));
+  const mpDist       = Math.abs(price - ms.maxpain);
+
+  rows.push({p:`Gamma Flip: $${gamma_flip}`,pts: price > gamma_flip ? 'מעל ✅':'מתחת ⚠', c: price > gamma_flip?'var(--green)':'var(--amber)'});
+  rows.push({p:`Max Pain: $${ms.maxpain} (מרחק: $${mpDist.toFixed(2)})`,pts: mpDist<atr ? '🧲 Magnet':'',c: mpDist<atr?'var(--purple)':'var(--text3)'});
+
+  rows.push({p:'─── Walls ───',pts:'',c:'var(--text3)'});
+  call_walls.forEach(w => rows.push({p:`Call Wall: $${w}`,pts:'Resistance',c:'var(--red)'}));
+  put_walls.forEach(w  => rows.push({p:`Put Wall: $${w}`,pts:'Support',c:'var(--green)'}));
+
+  rows.push({p:'─── Zones ───',pts:'',c:'var(--text3)'});
+  rows.push({p:`Magnet Zone: $${magnet_zone[0]}–$${magnet_zone[1]}`,pts:'PIN',c:'var(--purple)'});
+  rows.push({p:`Squeeze Zone Above: $${squeeze_zone}`,pts:'ACCEL',c:'var(--cyan)'});
+
+  const gammaSqueezeActive = price > K && ms.vol > 75 && ms.gex < 0;
+  if (gammaSqueezeActive) rows.push({p:`⚡ GAMMA SQUEEZE ACTIVE — מחיר ב-Strike עם OI`,pts:'SQUEEZE',c:'var(--purple)'});
+  if (mpDist < atr)       rows.push({p:`🧲 MAGNET EFFECT — מחיר נמשך ל-$${ms.maxpain}`,pts:'PIN',c:'var(--amber)'});
+  if (price > call_walls[0]) rows.push({p:`⚠ מעל Call Wall $${call_walls[0]} — צפה להתנגדות`,pts:'WALL',c:'var(--red)'});
+
+  rows.push({p:`GEX: ${ms.gex>0?'חיובי (יציב)':'שלילי (מגביר moves)'}`,pts:'',c:ms.gex>0?'var(--green)':'var(--amber)'});
+
+  const label = gammaSqueezeActive ? '⚡ Squeeze Active' : mpDist < atr ? '🧲 Magnet' : `Flip: $${gamma_flip}`;
+  const color = gammaSqueezeActive ? 'var(--purple)' : 'var(--amber)';
+  return { gamma_flip, call_walls, put_walls, magnet_zone, squeeze_zone, label, color, rows, gammaSqueezeActive };
+}
+
+function runEMValidator(ms, pos) {
+  const rows = [];
+  const em1d = ms.em1Day;
+  const em1w = em1d * Math.sqrt(5);
+  const t1   = pos.t1, t2 = pos.t2;
+  const stop = pos.stop;
+  const dte  = ms.dte;
+
+  const emRemaining = em1d * Math.sqrt(Math.max(1, dte));
+  const distT1 = t1 - ms.price;
+  const distT2 = t2 - ms.price;
+  const distStop = ms.price - stop;
+  const rr = (distT1 / distStop).toFixed(2);
+
+  rows.push({p:`EM יומי: ±$${em1d.toFixed(2)} (${(em1d/ms.price*100).toFixed(1)}%)`,pts:'',c:'var(--text3)'});
+  rows.push({p:`EM שבועי: ±$${em1w.toFixed(2)} (${(em1w/ms.price*100).toFixed(1)}%)`,pts:'',c:'var(--text3)'});
+  rows.push({p:`EM עד פקיעה (${dte}DTE): ±$${emRemaining.toFixed(2)}`,pts:'',c:'var(--text3)'});
+
+  rows.push({p:'─── Target Validation ───',pts:'',c:'var(--text3)'});
+
+  let confidence_adj = 0;
+  if (distT1 > emRemaining * 0.9) {
+    confidence_adj -= 10;
+    rows.push({p:`⚠ T1 ($${t1}) רחוק מ-EM — reduce confidence`,pts:'-10 conf',c:'var(--amber)'});
+  } else {
+    rows.push({p:`✅ T1 ($${t1}) בתוך EM — realistic`,pts:'',c:'var(--green)'});
+  }
+
+  if (distStop < ms.atr * 0.5) {
+    confidence_adj -= 10;
+    rows.push({p:`⚠ Stop ($${stop}) קטן מ-ATR — noise risk`,pts:'-10 conf',c:'var(--amber)'});
+  } else {
+    rows.push({p:`✅ Stop מעל ATR threshold`,pts:'',c:'var(--green)'});
+  }
+
+  rows.push({p:'─── Risk/Reward ───',pts:'',c:'var(--text3)'});
+  const rrColor = parseFloat(rr) >= 2 ? 'var(--green)' : parseFloat(rr) >= 1.5 ? 'var(--amber)' : 'var(--red)';
+  rows.push({p:`R/R Ratio: ${rr}:1`,pts: parseFloat(rr)>=2?'✅ Good':parseFloat(rr)>=1.5?'OK':'⚠ Poor', c:rrColor});
+
+  const label = `EM±$${em1d.toFixed(2)} | R/R ${rr}:1`;
+  const color = parseFloat(rr) >= 2 ? 'var(--green)' : 'var(--amber)';
+  return { em1d, em1w, emRemaining, rr: parseFloat(rr), confidence_adj, label, color, rows };
+}
+
+function runSessionEngine(ms) {
+  const rows = [];
+  const phase = ms.session;
+
+  const phases = {
+    premarket:    { behavior:'Pre-market scanning',       note:'אל תיכנס לפני open', quality:30, color:'var(--text3)' },
+    open:         { behavior:'High volatility open',      note:'ה-15 דקות הראשונות — זהירות!', quality:65, color:'var(--amber)' },
+    midmorning:   { behavior:'Trend continuation likely', note:'Breakouts כאן אמינים יותר', quality:85, color:'var(--green)' },
+    lunch:        { behavior:'Low volume choppy',         note:'Breakout ב-12:20 שווה פחות', quality:35, color:'var(--amber)' },
+    afternoon:    { behavior:'Momentum builds again',     note:'מחכים לאישור מחדש', quality:70, color:'var(--cyan)' },
+    power_hour:   { behavior:'Trend continuation',        note:'Allow runners, tighten stops', quality:88, color:'var(--green)' },
+    close:        { behavior:'Close near high → Cont.',   note:'סגירה קרוב High = Continuation מחר', quality:75, color:'var(--green)' },
+  };
+
+  const p = phases[phase] || phases.premarket;
+  rows.push({p:`Phase: ${phase.toUpperCase()}`,pts:'',c:p.color});
+  rows.push({p:`Behavior: ${p.behavior}`,pts:'',c:'var(--text2)'});
+  rows.push({p:`Execution: ${p.note}`,pts:'',c:'var(--text2)'});
+  rows.push({p:`Signal Quality: ${p.quality}/100`,pts:'',c:p.color});
+
+  // Phase-specific rules
+  if (phase === 'open')        rows.push({p:'⚠ Open: המתן ל-9:45 לפחות לפני כניסה',pts:'WAIT',c:'var(--amber)'});
+  if (phase === 'lunch')       rows.push({p:'⚠ Lunch: נמנע מ-breakouts — false signals',pts:'SKIP',c:'var(--amber)'});
+  if (phase === 'power_hour')  rows.push({p:'✅ Power Hour: הכי אמין לcontinuation',pts:'GO',c:'var(--green)'});
+  if (phase === 'close')       {
+    if (ms.chg > 0.8 && ms.vol > 65) rows.push({p:'✅ Close near High + Vol → Cont. מחר',pts:'HOLD',c:'var(--green)'});
+    else                              rows.push({p:'⚠ Close weak — שקול לצמצם לפני סגירה',pts:'TRIM',c:'var(--amber)'});
+  }
+
+  return { phase, quality: p.quality, color: p.color, label: `${phase} (${p.quality}/100)`, note: p.note, rows };
+}
+
+function runVolEngine(s) {
+  const ms   = buildMarketState(s);
+  const rows = [];
+  let score  = 0;
+
+  rows.push({p:'─── IV Assessment ───',pts:'',c:'var(--text3)'});
+  if      (ms.ivRank > 70){ score-=20; rows.push({p:`IV Rank ${ms.ivRank}% — יקר`,pts:'-20',c:'var(--red)'}); }
+  else if (ms.ivRank < 40){ score+=15; rows.push({p:`IV Rank ${ms.ivRank}% — זול`,pts:'+15',c:'var(--green)'}); }
+  else                    {            rows.push({p:`IV Rank ${ms.ivRank}% — ניטרלי`,pts:'0',c:'var(--text3)'}); }
+
+  if      (ms.ivhv > 1.2){ score-=15; rows.push({p:`IV/HV ${ms.ivhv} — Premium יקר`,pts:'-15',c:'var(--red)'}); }
+  else if (ms.ivhv < 0.9){ score+=10; rows.push({p:`IV/HV ${ms.ivhv} — Premium זול`,pts:'+10',c:'var(--green)'}); }
+  else                   {            rows.push({p:`IV/HV ${ms.ivhv} — הוגן`,pts:'0',c:'var(--text3)'}); }
+  rows.push({p:`IV ${ms.iv}% | HV30 ${ms.hv30}% | Theta $${Math.abs(ms.theta).toFixed(3)}/יום`,pts:'',c:'var(--text3)'});
+
+  rows.push({p:'─── DTE / Theta ───',pts:'',c:'var(--text3)'});
+  if      (ms.dte<=2){ score-=20; rows.push({p:`DTE ${ms.dte} — Theta קטסטרופלי`,pts:'-20',c:'var(--red)'}); }
+  else if (ms.dte<=7){ score-=10; rows.push({p:`DTE ${ms.dte} — Theta לוחץ`,pts:'-10',c:'var(--amber)'}); }
+  else               {            rows.push({p:`DTE ${ms.dte} — Theta OK`,pts:'0',c:'var(--text3)'}); }
+
+  rows.push({p:'─── Premium Decision ───',pts:'',c:'var(--text3)'});
+  const buying_ok = ms.ivRank < 40 && ms.ivhv < 1.0;
+  const prefer_spread = ms.ivRank > 60 || ms.ivhv > 1.15;
+  if (buying_ok)     { rows.push({p:'✅ Long Premium OK',pts:'',c:'var(--green)'}); }
+  else if (prefer_spread){ rows.push({p:'→ Spread / Selling preferred',pts:'',c:'var(--amber)'}); }
+
+  rows.push({p:'─── Post-Close ───',pts:'',c:'var(--text3)'});
+  const closeNearHigh = ms.chg > 1.0 && ms.vol > 70;
+  if (closeNearHigh){ score+=8; rows.push({p:'✅ Close near High → Continuation',pts:'+8',c:'var(--green)'}); }
+
+  const label = score < -10 ? 'Spread/Selling' : score > 5 ? 'Long Premium OK' : 'Neutral';
+  const color = score < -10 ? 'var(--red)' : score > 5 ? 'var(--green)' : 'var(--text2)';
+  return { score, label, color, rows, ivRank:ms.ivRank, hv30:ms.hv30, ivhv:ms.ivhv, dte:ms.dte,
+           theta:ms.theta, closeNearHigh, buying_ok, prefer_spread };
+}
+
+function runPlaybook(ms, regime, conflict, strat, dir, entry, pos, gamma, em, session, vol) {
+  const cappedDir = Math.min(dir.score, conflict.new_bias_cap);
+  const conf = Math.round(cappedDir*0.4 + (em.rr>=2?70:50)*0.2 + session.quality*0.2 + (100-Math.max(0,vol.score*-2+50))*0.2);
+
+  let bias, biasColor;
+  if      (cappedDir>=65){ bias='Bullish';      biasColor='var(--green)'; }
+  else if (cappedDir>=55){ bias='Bullish Weak'; biasColor='var(--amber)'; }
+  else if (cappedDir>=45){ bias='Neutral';      biasColor='var(--text2)'; }
+  else if (cappedDir>=30){ bias='Bearish Weak'; biasColor='var(--amber)'; }
+  else                   { bias='Bearish';      biasColor='var(--red)';   }
+
+  let confLabel, confColor;
+  if      (conf>=80){ confLabel='High Conviction 🔥'; confColor='var(--green)'; }
+  else if (conf>=65){ confLabel='Tradable ✅';         confColor='var(--cyan)';  }
+  else if (conf>=50){ confLabel='Risky ⚠';            confColor='var(--amber)'; }
+  else              { confLabel='Skip ❌';             confColor='var(--red)';   }
+
+  const why = [
+    ...dir.score>=55  ? ['Direction confirmed'] : [],
+    ...entry.entry_state==='breakout' ? ['Breakout confirmed'] : [],
+    ...gamma.gammaSqueezeActive ? ['Gamma Squeeze active'] : [],
+    ...vol.closeNearHigh ? ['Post-close Continuation signal'] : [],
+    ...session.quality>=80 ? [`Session: ${session.phase} — High quality`] : [],
+    ...em.rr>=2 ? [`R/R ${em.rr}:1 — Good ratio`] : [],
+  ];
+
+  const avoid = [
+    ...conflict.conflict_score>=2 ? [`Conflict ${conflict.conflict_score}/4 — ${conflict.message}`] : [],
+    ...vol.ivRank>65 ? ['Naked long — IV elevated'] : [],
+    ...regime.regime==='range' ? ['Chasing breakouts in Range'] : [],
+    ...entry.entry_state==='no_trade' ? ['כניסה עכשיו — מצב No Trade'] : [],
+    ...em.rr<1.5 ? ['R/R נמוך מ-1.5:1'] : [],
+  ];
+
+  return { conf, confLabel, confColor, bias, biasColor,
+           trade: strat.best, alt: strat.alt, why, avoid,
+           entry: entry.trigger, invalidation: entry.invalid,
+           t1: pos.t1, t2: pos.t2, t3: pos.t3, stop: pos.stop,
+           manage: { partial_at_t1:'50%', trail_after_t1:true, time_stop:`${ms.dte} DTE` },
+           cappedDir };
+}
+
+function renderEngCard(score, label, color, rows) {
+  const barW = Math.min(100, Math.max(0, score));
+  const barColor = score>=65?'var(--green)':score<=35?'var(--red)':'var(--amber)';
+  return `<div style="margin-bottom:10px">
+    <div class="eng-score" style="color:${color}">${score}<span style="font-size:15px">/100</span></div>
+    <div class="eng-label" style="color:${color};margin-bottom:6px">${label}</div>
+    <div class="eng-bar"><div class="eng-bar-fill" style="width:${barW}%;background:${barColor}"></div></div>
+  </div>
+  ${rows.map(r=>`<div class="eng-row">
+    <span class="eng-param" style="font-size:11px;color:${r.c}">${r.p}</span>
+    <span class="eng-pts" style="color:${r.c};font-size:11px;white-space:nowrap">${r.pts}</span>
+  </div>`).join('')}`;
+}
+
+function confRing(conf, color) {
+  const r=28,cx=35,cy=35,c=2*Math.PI*r,dash=(conf/100)*c;
+  return `<svg width="70" height="70" viewBox="0 0 70 70">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="var(--bg5)" stroke-width="7"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}" stroke-width="7"
+      stroke-dasharray="${dash.toFixed(1)} ${c.toFixed(1)}"
+      stroke-dashoffset="${(c/4).toFixed(1)}" stroke-linecap="round"/>
+    <text x="${cx}" y="${cy+5}" text-anchor="middle" font-family="var(--mono)"
+      font-size="14" font-weight="700" fill="${color}">${conf}</text></svg>`;
+}
+
+function runDesk() {
+  if (!deskTicker) { deskTicker = stocks[0].t; initDeskTickers(); }
+  const s = stocks.find(x => x.t === deskTicker);
+  if (!s) return;
+
+  const ms      = buildMarketState(s);
+  const regime  = runRegimeEngine(ms);
+  const dir     = runDirectionEngine(s);
+  const conflict= runConflictResolver(ms, dir);
+  const strat   = runStrategySelector(ms, regime, dir, {ivRank:ms.ivRank}, conflict);
+  const entry   = runEntryEngine(ms, regime, dir);
+  const vol     = runVolEngine(s);
+  const pos     = runPositionEngine(ms, vol, dir, strat);
+  const gamma   = runGammaMap(ms);
+  const em      = runEMValidator(ms, pos);
+  const session = runSessionEngine(ms);
+  const play    = runPlaybook(ms, regime, conflict, strat, dir, entry, pos, gamma, em, session, vol);
+
+  // ── SPRINT 1 panels ──
+  document.getElementById('regimeBody').innerHTML   = renderEngCard(regime.confidence, regime.label, regime.color, regime.rows);
+  document.getElementById('conflictBody').innerHTML = renderEngCard(
+    Math.max(0, 100 - conflict.conflict_score*25), conflict.label, conflict.color, conflict.rows);
+  document.getElementById('stratBody').innerHTML    = renderEngCard(
+    play.conf, strat.best.includes('Skip')?'Skip ❌':'Strategy Selected', strat.color, strat.rows);
+
+  // ── SPRINT 2 panels ──
+  document.getElementById('dirBody').innerHTML   = renderEngCard(dir.score, dir.label, dir.color, dir.rows);
+  document.getElementById('entryBody').innerHTML = renderEngCard(entry.entry_quality, entry.label, entry.color, entry.rows);
+  document.getElementById('posBody').innerHTML   = renderEngCard(80, pos.label, pos.color, pos.rows);
+
+  // ── SPRINT 3 panels ──
+  document.getElementById('gammaBody').innerHTML   = renderEngCard(70, gamma.label, gamma.color, gamma.rows);
+  document.getElementById('emBody').innerHTML      = renderEngCard(
+    Math.max(0,Math.min(100,70+em.confidence_adj+(em.rr>=2?15:0))), em.label, em.color, em.rows);
+  document.getElementById('sessionBody').innerHTML = renderEngCard(session.quality, session.label, session.color, session.rows);
+  document.getElementById('volBody').innerHTML     = renderEngCard(
+    Math.min(100,Math.max(0,vol.score+50)), vol.label, vol.color, vol.rows);
+
+  // ── SPRINT 4 — Playbook Summary ──
+  document.getElementById('deskSummary').innerHTML = `
+    <div style="background:var(--bg3);border:2px solid ${play.confColor}22;border-radius:14px;padding:18px 22px">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:14px">
+        ${confRing(play.conf, play.confColor)}
+        <div style="flex:1;min-width:160px">
+          <div style="font-family:var(--disp);font-size:22px;font-weight:800;color:${play.biasColor};margin-bottom:3px">${s.t} — ${play.bias} (${play.cappedDir}/100)</div>
+          <div style="font-family:var(--mono);font-size:13px;font-weight:600;color:${play.confColor};margin-bottom:5px">${play.confLabel}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;padding:3px 10px;border-radius:5px;background:var(--bg4);border:1px solid var(--border2);color:${regime.color}">${regime.regime.toUpperCase()} ${regime.confidence}%</span>
+            <span style="font-size:11px;padding:3px 10px;border-radius:5px;background:var(--bg4);border:1px solid var(--border2);color:${session.color}">${session.phase}</span>
+            ${conflict.conflict_score>=2?`<span style="font-size:11px;padding:3px 10px;border-radius:5px;background:rgba(245,166,35,.12);border:1px solid var(--amber);color:var(--amber)">Conflict ${conflict.conflict_score}/4</span>`:''}
+            ${dir.scalp?`<span style="font-size:11px;padding:3px 10px;border-radius:5px;background:rgba(245,166,35,.1);border:1px solid var(--amber);color:var(--amber)">Scalp Only</span>`:''}
+          </div>
+        </div>
+        <div style="background:var(--bg4);border-radius:10px;padding:12px 18px;border-right:3px solid ${strat.color}">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;margin-bottom:5px">Best Trade</div>
+          <div style="font-family:var(--mono);font-size:16px;font-weight:700;color:${strat.color}">${play.trade}</div>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:3px">Alt: ${play.alt}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+        ${[
+          ['Trend HTF', dir.trendScore, dir.trendScore>=55?'var(--green)':'var(--red)'],
+          ['Mom LTF',   dir.momScore,   dir.momScore>=55?'var(--green)':'var(--amber)'],
+          ['Entry',     entry.entry_quality, entry.color],
+          ['Session',   session.quality, session.color],
+          ['R/R',       Math.round(Math.min(100,em.rr*33)), em.rr>=2?'var(--green)':'var(--amber)'],
+        ].map(([lbl,val,col])=>`<div style="background:var(--bg4);border-radius:8px;padding:7px 10px">
+          <div style="font-family:var(--mono);font-size:9px;color:var(--text3);text-transform:uppercase;margin-bottom:2px">${lbl}</div>
+          <div style="font-family:var(--mono);font-size:13px;font-weight:600;color:${col}">${val}/100</div>
+        </div>`).join('')}
+      </div>
+    </div>`;
+
+  // ── SPRINT 4 — Full Playbook ──
+  document.getElementById('decisionBody').innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem">
+      <div class="trade-box ${play.bias.includes('Bull')?'bull':play.bias.includes('Bear')?'bear':'neut'}">
+        <div class="tl">Bias</div><div class="tv" style="color:${play.biasColor}">${play.bias}</div></div>
+      <div class="trade-box ${play.bias.includes('Bull')?'bull':'neut'}">
+        <div class="tl">Trade</div><div class="tv" style="color:${strat.color};font-size:11px">${play.trade}</div></div>
+      <div class="trade-box neut">
+        <div class="tl">Entry</div><div class="tv">$${play.entry}</div>
+        <div style="font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:2px">${entry.entry_state.toUpperCase()}</div></div>
+      <div class="trade-box bear">
+        <div class="tl">Invalidation</div><div class="tv" style="color:var(--red)">$${play.invalidation}</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem">
+      <div style="background:rgba(31,216,122,.08);border:1px solid rgba(31,216,122,.2);border-radius:9px;padding:10px 13px">
+        <div class="tl">T1 — 50% Exit</div><div class="tv up">$${play.t1} (+${((play.t1/ms.price-1)*100).toFixed(1)}%)</div></div>
+      <div style="background:rgba(31,216,122,.05);border:1px solid rgba(31,216,122,.15);border-radius:9px;padding:10px 13px">
+        <div class="tl">T2 — Trail</div><div class="tv up">$${play.t2} (+${((play.t2/ms.price-1)*100).toFixed(1)}%)</div></div>
+      <div style="background:rgba(31,216,122,.03);border:1px solid rgba(31,216,122,.1);border-radius:9px;padding:10px 13px">
+        <div class="tl">T3 — Runner</div><div class="tv up">$${play.t3} (+${((play.t3/ms.price-1)*100).toFixed(1)}%)</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">✅ Why</div>
+        <ul class="reason-list">${play.why.map(w=>`<li><span>✅</span><span>${w}</span></li>`).join('')||'<li><span>—</span><span>אין אישורים</span></li>'}</ul>
+      </div>
+      <div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">❌ Avoid / Risk</div>
+        <ul class="risk-list">${play.avoid.map(a=>`<li><span>⚠</span><span>${a}</span></li>`).join('')||'<li><span>—</span><span>אין סיכונים גדולים</span></li>'}</ul>
+      </div>
+    </div>
+
+    <div style="background:var(--bg3);border:1px solid rgba(124,92,252,.2);border-radius:10px;padding:14px 16px;margin-bottom:1rem">
+      <div style="font-family:var(--disp);font-size:11px;font-weight:700;color:var(--purple);text-transform:uppercase;margin-bottom:8px">🧠 Position Management</div>
+      <ul class="reason-list">
+        <li><span>💰</span><span>$${play.t1} (+2%) → צא 50%</span></li>
+        <li><span>📈</span><span>אחרי T1 → הזז Stop ל-Breakeven $${(ms.price*0.998).toFixed(2)}</span></li>
+        <li><span>⏱</span><span>Time Stop: ${play.manage.time_stop} | Theta $${Math.abs(ms.theta).toFixed(3)}/יום</span></li>
+        <li><span>🔴</span><span>מתחת $${play.invalidation} → EXIT 100%</span></li>
+        ${vol.closeNearHigh?`<li><span>✅</span><span>Post-close near high → hold runners</span></li>`:''}
+        ${vol.ivRank>65?`<li><span>⚠</span><span>IV Rank ${vol.ivRank}% — זהירות מ-IV Crush לאחר event</span></li>`:''}
+      </ul>
+    </div>
+
+    <div style="background:var(--bg4);border-radius:8px;padding:10px 14px;font-family:var(--mono);font-size:11px;color:var(--text2);line-height:1.8">
+      <strong style="color:var(--text)">כניסה תקפה:</strong> פריצת $${play.entry} | מעל VWAP $${ms.vwap.toFixed(2)} | ${session.phase} session<br>
+      <strong style="color:var(--red)">לא נכנסים:</strong> Range ${regime.regime==='range'?'← עכשיו!':''} | Conflict≥2 | מתחת VWAP | Lunch session<br>
+      <strong style="color:var(--cyan)">EM Validator:</strong> EM±$${em.em1d.toFixed(2)}/יום | R/R ${em.rr}:1 | Gamma Flip $${gamma.gamma_flip}
+    </div>`;
+
+  document.getElementById('deskOutput').style.display = 'block';
+  document.getElementById('deskPlaceholder').style.display = 'none';
+}
+
+function emaSeries(values, period){
+  const k=2/(period+1); const out=[]; let ema=null;
+  values.forEach((v,i)=>{ema = (ema===null) ? v : (v*k + ema*(1-k)); out.push(ema);});
+  return out;
+}
+
+function stdev(values){const n=values.length;if(!n)return 0;const m=values.reduce((a,b)=>a+b,0)/n;return Math.sqrt(values.reduce((a,b)=>a+(b-m)*(b-m),0)/n);}
+
+function calcRsi(closes, period=14){
+  if(!closes || closes.length<period+2) return null;
+  let gains=0, losses=0;
+  for(let i=1;i<=period;i++){const d=closes[i]-closes[i-1]; if(d>=0) gains+=d; else losses-=d;}
+  let avgGain=gains/period, avgLoss=losses/period;
+  for(let i=period+1;i<closes.length;i++){const d=closes[i]-closes[i-1]; avgGain=(avgGain*(period-1)+Math.max(d,0))/period; avgLoss=(avgLoss*(period-1)+Math.max(-d,0))/period;}
+  if(avgLoss===0) return 100; const rs=avgGain/avgLoss; return 100-(100/(1+rs));
+}
+
+function calcHistoricalVol(closes, lookback=30){
+  if(!closes || closes.length<lookback+1) return null;
+  const rets=[]; for(let i=closes.length-lookback;i<closes.length;i++){rets.push(Math.log(closes[i]/closes[i-1]));}
+  return stdev(rets)*Math.sqrt(252)*100;
+}
+
+function isPlausiblePrice(ticker,price){
+  const p=+price; if(!Number.isFinite(p)||p<=0)return false;
+  const r=PRICE_RANGES[String(ticker).toUpperCase()];
+  return !r || (p>=r[0] && p<=r[1]);
+}
+
+function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+/* ── Init ── */
+initTickerRow();
+</script>
+</body>
+</html>
